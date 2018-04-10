@@ -1,0 +1,33 @@
+{
+  "compilerOptions": {
+    "module": "commonjs",
+    "noImplicitAny": false,
+    "emitDecoratorMetadata": true,
+    "experimentalDecorators": true,
+    "moduleResolution": "node",
+    "declaration": false,
+    "listFiles": false,
+    "target" : "es6",
+    "sourceMap": true,
+    "types": ["node"], // "reflect-metadata", "mocha",
+    "lib": [
+      "dom",
+      "es5",
+      "es6",
+      "esnext.asynciterable",
+      "es2015.promise"
+    ]
+  },
+  "exclude": [
+    "node_modules",
+    ".vscode",
+    ".idea",
+    ".serverless",
+    ".git"
+  ],
+  "compileOnSave": false,
+  "buildOnSave": false,
+  "atom": {
+    "rewriteTsconfig": false
+  }
+}

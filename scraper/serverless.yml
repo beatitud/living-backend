@@ -1,0 +1,23 @@
+service:
+  name: aws-nodejs-typescript
+
+plugins:
+  - serverless-webpack
+
+provider:
+  name: aws
+  runtime: nodejs8.10
+
+functions:
+  LivingScraper:
+    handler: schedulable/lambda.scrap
+    events:
+      - schedule:
+          cron: cron(0 1 * * ? *)
+
+resources:
+  Resources:
+    LivingScraperLogGroup:
+      Type: AWS::Logs::LogGroup
+      Properties:
+        RetentionInDays: 7
