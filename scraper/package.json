@@ -12,8 +12,8 @@
     "@types/cheerio": "^0.22.7",
     "@types/lodash": "^4.14.106",
     "@types/moment": "^2.13.0",
-    "@types/node": "^8.0.57",
-    "aws-sdk": "^2.223.1",
+    "@types/node": "^8.10.7",
+    "aws-sdk": "^2.224.1",
     "mocha": "^5.0.5",
     "serverless-webpack": "^4.0.0",
     "ts-loader": "^2.3.7",
@@ -26,6 +26,7 @@
     "axios": "^0.18.0",
     "cheerio": "^1.0.0-rc.2",
     "lodash": "^4.17.5",
-    "moment": "^2.22.0"
+    "moment": "^2.22.0",
+    "q": "^1.5.1"
   }
 }
