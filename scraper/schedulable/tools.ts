@@ -35,12 +35,20 @@ const getDates = (max: number = 7) =>
 
 // http://universalis.com/americas.brazil/20180413/mass.htm
 
-const getLinks = (baseUrl: string) => {
+export interface IEndpoint {
+    url: string;
+    title: string;
+    key: string;
+}
 
-    const formatUrls = x => getDates().map(y => [x[0], `${x[1]}/${y}`, `${baseUrl}/${x[1]}/${y}/mass.htm`]);
-    const mapToPath  =  curryRight(flatMap)(formatUrls);
-    const chain = flow(getCountryCalendars, mapToPath);
+export const getLinks = (baseUrl: string): IEndpoint[] => {
+    const formatUrls: (x) => IEndpoint[] = x => getDates().map(y => ({
+        title: x[0],
+        key: `${x[1]}/${y}`,
+        url: `${baseUrl}/${x[1]}/${y}/mass.htm`,
+    }));
+    const chain = flow(getCountryCalendars, x => flatMap(x, formatUrls));
     return chain();
 };
 
-console.log(getLinks("http://universalis.com"));
+// console.log(getLinks("http://universalis.com"));
