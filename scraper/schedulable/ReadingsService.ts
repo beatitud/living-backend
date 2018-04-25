@@ -11,6 +11,5 @@ export class ReadingsService implements IReadingsService {
     public async prepareReadings(): Promise<any> {
         const readings = await this.crawler.crawl();
 
-
     }
 }

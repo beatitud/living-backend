@@ -1,5 +1,11 @@
 service:
-  name: aws-nodejs-typescript
+  name: living-scraper
+
+custom:
+  s3:
+    storageBucketName: living.scraper.storage
+  # webpack:
+  #   includeModules: true
 
 plugins:
   - serverless-webpack
@@ -7,13 +13,26 @@ plugins:
 provider:
   name: aws
   runtime: nodejs8.10
-
+  region: eu-west-3
+  stage: ${opt:stage}
+  iamRoleStatements:
+    - Effect: "Allow"
+      Action:
+        - "s3:Put*"
+        - "s3:Get*"
+        - "s3:Describe*"
+        - "s3:List*"
+      Resource:
+        - "arn:aws:s3:::${self:custom.s3.storageBucketName}"
+        - "arn:aws:s3:::${self:custom.s3.storageBucketName}/*"
 functions:
   LivingScraper:
     handler: schedulable/lambda.scrap
+    environment:
+      STORAGE_BUCKET: ${self:custom.s3.storageBucketName}
     events:
       - schedule:
-          cron: cron(0 1 * * ? *)
+          rate: cron(0 1 * * ? *)
 
 resources:
   Resources:
@@ -21,3 +40,43 @@ resources:
       Type: AWS::Logs::LogGroup
       Properties:
         RetentionInDays: 7
+    LivingScraperReadingsStorage:
+      Type: AWS::S3::Bucket
+      Properties:
+        BucketName: ${self:custom.s3.storageBucketName}
+        AccessControl: PublicRead
+    LivingScraperReadingsStoragePolicy:
+      Type: 'AWS::S3::BucketPolicy'
+      Properties:
+        Bucket:
+            Ref: LivingScraperReadingsStorage
+        PolicyDocument:
+          Id: LivingScraperPublicReadPolicy
+          Version: "2012-10-17"
+          Statement:
+            - Sid: PublicReadForGetBucketObjects
+              Effect: Allow
+              Principal: '*'
+              Action: 's3:GetObject'
+              Resource:
+                Fn::Join:
+                  - ''
+                  - - 'arn:aws:s3:::'
+                    - Ref: LivingScraperReadingsStorage
+                    - /*
+  Outputs:
+    LivingScraperWebsiteURL:
+      Value:
+        Fn::GetAtt:
+          - LivingScraperReadingsStorage
+          - WebsiteURL
+      Description: URL for website hosted on S3
+    LivingScraperStorageSecureURL:
+      Value:
+        Fn::Join:
+          - ''
+          - - 'https://'
+            - Fn::GetAtt:
+                - LivingScraperReadingsStorage
+                - DomainName
+      Description: Name of S3 bucket to hold website content

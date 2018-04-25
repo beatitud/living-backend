@@ -18,6 +18,6 @@ export const getEwtnLinks = (): IEndpoint[] => {
     const baseUrl = "https://www.ewtn.com/se/readings/readingsservice.svc/day";
     return getDates().map(x => ({
         url: `${baseUrl}/${x}/en`,
-        key: `readings/ewtn/${moment(x, DATE_FORMAT).format("YYYYMMDD")}/data.json`,
+        key: `readings/ewtn/${moment(x, DATE_FORMAT).format("YYYY/MM/DD")}/data.json`,
     }));
 };
