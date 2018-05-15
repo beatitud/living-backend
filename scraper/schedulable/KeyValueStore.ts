@@ -1,9 +1,16 @@
-import AWS = require("aws-sdk");
-import { HeadObjectRequest, PutObjectRequest, HeadObjectOutput, PutObjectOutput } from "aws-sdk/clients/s3";
-import { isNil } from "lodash";
+import * as AWS from "aws-sdk";
+import { isNil, get } from "lodash";
+import { HeadObjectRequest,
+         PutObjectRequest} from "aws-sdk/clients/s3";
 
 export interface IKeyValueStore {
     save(key: string, value: string): Promise<object>;
+    hasKey(key: string): Promise<boolean>;
+}
+
+export interface IHasKey {
+    hasIt: boolean;
+    key: string;
 }
 
 export class KeyValueStore implements IKeyValueStore {
@@ -15,9 +22,7 @@ export class KeyValueStore implements IKeyValueStore {
         });
     }
     public async save(key: string, value: string): Promise<object> {
-        const headRequest = {Bucket: this.bucketName, Key: key} as HeadObjectRequest;
-        const headObject  = await this.s3.headObject(headRequest).promise().catch(e => null);
-        if (!isNil(headObject)) {
+        if (await this.hasKey(key)) {
             console.log(`No needs to save ${key} file, record already exists`);
             return null;
         }
@@ -26,7 +31,31 @@ export class KeyValueStore implements IKeyValueStore {
         return result;
     }
 
+    public async hasKey(key: string): Promise<boolean> {
+        const headRequest = {Bucket: this.bucketName, Key: key} as HeadObjectRequest;
+        const hasHeadObject = await this.s3
+            .headObject(headRequest).promise()
+            .then(x => true)
+            .catch(e => this.handleHeadError(e));
+
+        if (isNil(hasHeadObject)) {
+            throw new Error(`Key ${key} has provoked an exception`);
+        }
+
+        return hasHeadObject;
+    }
+
+    // noinspection JSMethodCanBeStatic
     private handleError(e) {
+        console.error(e);
+        return null;
+    }
+
+    // noinspection JSMethodCanBeStatic
+    private handleHeadError(e) {
+        if (get(e, "code", "") === "NotFound") {
+            return false;
+        }
         console.error(e);
         return null;
     }

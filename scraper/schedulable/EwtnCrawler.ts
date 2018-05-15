@@ -1,4 +1,4 @@
-import {getEwtnLinks, IEndpoint} from "./tools";
+import {getReferencesLinks, IEndpoint} from "./tools";
 import axios from "axios";
 import {get, isNil} from "lodash";
 import { Endpoint } from "aws-sdk";
@@ -6,7 +6,7 @@ import { Endpoint } from "aws-sdk";
 export interface ICrawlingResult {
     color: string;
     key: string;
-    readings: Array<{reference: string; type: string}>;
+    readings: Array<{reference: string; type: string, link?: string}>;
 }
 
 export interface ICrawler {
@@ -16,7 +16,7 @@ export interface ICrawler {
 export class EwtnCrawler implements ICrawler {
 
     public async crawl(): Promise<ICrawlingResult[]> {
-        const links = getEwtnLinks().map(x => this.mapWithPageContent(x));
+        const links = getReferencesLinks().map(x => this.mapWithPageContent(x));
         const responses = await Promise.all(links).catch(e => null);
         const result = responses
             .map(x => this.extractReferences(x))

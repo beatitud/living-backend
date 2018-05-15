@@ -16,6 +16,7 @@
     "@types/q": "^1.5.0",
     "aws-sdk": "^2.228.1",
     "mocha": "^5.0.5",
+    "serverless-pseudo-parameters": "^1.6.0",
     "serverless-webpack": "^4.0.0",
     "ts-loader": "^4.2.0",
     "typescript": "^2.5.2",
@@ -30,6 +31,7 @@
     "cheerio": "^1.0.0-rc.2",
     "lodash": "^4.17.5",
     "moment": "^2.22.0",
-    "q": "^1.5.1"
+    "q": "^1.5.1",
+    "rxjs": "^6.1.0"
   }
 }

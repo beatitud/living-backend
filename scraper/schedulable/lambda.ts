@@ -1,9 +1,10 @@
-import {Callback, Context} from "aws-lambda";
+import {Callback, Context, SNSEvent} from "aws-lambda";
 import * as AWS from "aws-sdk";
 import { hasIn, countBy, isNil } from "lodash";
 import * as Q from "q";
-import { KeyValueStore } from "./KeyValueStore";
 import { ReadingsService } from "./ReadingsService";
+import * as console from "console";
+import ScrapingService, {IScrapingService} from "./ScrapingService";
 
 AWS.config.setPromisesDependency(Q.Promise);
 
@@ -11,9 +12,17 @@ if (hasIn(process.env, "Apple_PubSub_Socket_Render") || hasIn(process.env, "HOME
     AWS.config.credentials = new AWS.SharedIniFileCredentials({profile: "personal"});
 }
 
-export async function scrap(event: any, context: Context, cb: Callback) {
+export async function crawlReferences(event: any, context: Context, cb: Callback) {
     const readingsService = new ReadingsService();
-    const result = await readingsService.prepareReadings();
-    console.log("Count of unsaved records(days): ", countBy(result, isNil).true);
-    console.log("Saved result: ", result.filter(x => !isNil(x)));
+    const references = await readingsService.prepareReferences();
+    // console.log("Count of unsaved records(days): ", countBy(references, isNil).true);
+    console.log("Saved references: ", JSON.stringify(references.filter(x => !isNil(x))));
+    const result = await readingsService.propagateReferences(references);
+    console.log("Result: ", JSON.stringify(result));
+}
+
+export async function scrapReadings(event: SNSEvent) {
+    const scrapingService = new ScrapingService() as IScrapingService;
+    scrapingService.scrapReadings(event.Records);
+    console.log("Received event: ", JSON.stringify(event));
 }

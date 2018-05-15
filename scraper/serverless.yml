@@ -4,17 +4,20 @@ service:
 custom:
   s3:
     storageBucketName: living.scraper.storage
-  # webpack:
-  #   includeModules: true
-
+  sns:
+    propagationTopicName: living-propagation-topic-${opt:stage}
+    propagationTopicArn: "arn:aws:sns:${self:provider.region}:#{AWS::AccountId}:${self:custom.sns.propagationTopicName}"
 plugins:
   - serverless-webpack
-
+  - serverless-pseudo-parameters
 provider:
   name: aws
   runtime: nodejs8.10
   region: eu-west-3
   stage: ${opt:stage}
+  environment:
+    STORAGE_BUCKET: ${self:custom.s3.storageBucketName}
+    PROPAGATION_TOPIC: "${self:custom.sns.propagationTopicArn}"
   iamRoleStatements:
     - Effect: "Allow"
       Action:
@@ -24,22 +27,34 @@ provider:
         - "s3:List*"
       Resource:
         - "arn:aws:s3:::${self:custom.s3.storageBucketName}"
-        - "arn:aws:s3:::${self:custom.s3.storageBucketName}/*"
+    - Effect: "Allow"
+      Action:
+        - "sns:Subscribe"
+        - "sns:Publish"
+      Resource:
+        - "${self:custom.sns.propagationTopicArn}"
 functions:
-  LivingScraper:
-    handler: schedulable/lambda.scrap
-    environment:
-      STORAGE_BUCKET: ${self:custom.s3.storageBucketName}
+  LivingReferencesCrawler:
+    handler: schedulable/lambda.crawlReferences
     events:
       - schedule:
           rate: cron(0 1 * * ? *)
+  LivingReadingsScraper:
+    handler: schedulable/lambda.scrapReadings
+    events:
+      - sns: "${self:custom.sns.propagationTopicName}"
+
 
 resources:
   Resources:
-    LivingScraperLogGroup:
+    LivingReferencesCrawlerLogGroup:
       Type: AWS::Logs::LogGroup
       Properties:
-        RetentionInDays: 7
+        RetentionInDays: 3
+    LivingReadingsScraperLogGroup:
+      Type: AWS::Logs::LogGroup
+      Properties:
+        RetentionInDays: 3
     LivingScraperReadingsStorage:
       Type: AWS::S3::Bucket
       Properties:
