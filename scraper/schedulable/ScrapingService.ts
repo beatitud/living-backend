@@ -1,10 +1,11 @@
 import {SNSEventRecord} from "aws-lambda";
 import {from} from "rxjs/index";
-import {map} from "rxjs/operators";
+import {map, flatMap, reduce} from "rxjs/operators";
 import {EwtnCrawler, ICrawler, ICrawlingResult} from "./EwtnCrawler";
 import {IKeyValueStore, KeyValueStore} from "./KeyValueStore";
 import Axios from "axios";
 import * as cheerio from "cheerio";
+import {PutObjectOutput} from "aws-sdk/clients/s3";
 
 export interface IScrapedReading {
     reference: string;
@@ -30,18 +31,27 @@ export default class ScrapingService implements IScrapingService {
 
     public async scrapReadings(records: SNSEventRecord[]): Promise<any> {
         const convert = JSON.parse;
-        from(records)
+        return from(records)
             .pipe(map(x => x.Sns.Message))
             .pipe(map(x => convert(x) as ICrawlingResult))
-            .pipe(map(x => this.mapToScraped(x)))
-            // .pipe()
+            .pipe(flatMap(x => this.mapToScraped(x)))
+            .pipe(flatMap(x => this.saveReadings(x)))
+            .pipe(reduce((acc: PutObjectOutput[], x: PutObjectOutput) => [...acc, x], []))
+            .toPromise()
         ;
     }
 
+    private async saveReadings(scrapingResult: IScrapingResult): Promise<PutObjectOutput> {
+         return await this.keyValueStore
+             .save(scrapingResult.key, JSON.stringify(scrapingResult));
+    }
+
     private async mapToScraped(crawled: ICrawlingResult): Promise<IScrapingResult> {
+        const readings = crawled.readings
+            .map(x => this.getAndScrap(x));
         return {
             ...crawled,
-            readings: await Promise.all(crawled.readings.map(x => this.getAndScrap(x))),
+            readings: await Promise.all(readings),
         };
     }
 
@@ -49,7 +59,7 @@ export default class ScrapingService implements IScrapingService {
         const response = await Axios.get(reading.link);
         const $ = cheerio.load(response.data);
         const text = $("span[id].text").toArray()
-            .map(x => $(x).html())
+            .map(x => $(x).parent().html())
             .reduce((agg, x) => `${agg}${x}`, "");
         return {
             text,

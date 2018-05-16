@@ -1,10 +1,13 @@
 import * as AWS from "aws-sdk";
 import { isNil, get } from "lodash";
-import { HeadObjectRequest,
-         PutObjectRequest} from "aws-sdk/clients/s3";
+import {
+    HeadObjectRequest,
+    PutObjectOutput,
+    PutObjectRequest,
+} from "aws-sdk/clients/s3";
 
 export interface IKeyValueStore {
-    save(key: string, value: string): Promise<object>;
+    save(key: string, value: string): Promise<PutObjectOutput>;
     hasKey(key: string): Promise<boolean>;
 }
 
@@ -21,7 +24,7 @@ export class KeyValueStore implements IKeyValueStore {
             params: {Bucket: bucketName},
         });
     }
-    public async save(key: string, value: string): Promise<object> {
+    public async save(key: string, value: string): Promise<PutObjectOutput> {
         if (await this.hasKey(key)) {
             console.log(`No needs to save ${key} file, record already exists`);
             return null;

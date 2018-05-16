@@ -46,7 +46,6 @@ export class ReadingsService implements IReadingsService {
     public async propagateReferences(references: ICrawlingResult[]): Promise<any> {
         const sns = new AWS.SNS();
         const targetArn = get(process, "env.PROPAGATION_TOPIC");
-        console.log("TOPIC_ARN", targetArn);
         const publish = {TargetArn: targetArn} as PublishInput;
         return await Promise.all(
             references

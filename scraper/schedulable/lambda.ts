@@ -23,6 +23,7 @@ export async function crawlReferences(event: any, context: Context, cb: Callback
 
 export async function scrapReadings(event: SNSEvent) {
     const scrapingService = new ScrapingService() as IScrapingService;
-    scrapingService.scrapReadings(event.Records);
-    console.log("Received event: ", JSON.stringify(event));
+    const result = await scrapingService.scrapReadings(event.Records);
+    console.log(JSON.stringify(result));
+    return result;
 }

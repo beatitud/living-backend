@@ -6,10 +6,9 @@ custom:
     storageBucketName: living.scraper.storage
   sns:
     propagationTopicName: living-propagation-topic-${opt:stage}
-    propagationTopicArn: "arn:aws:sns:${self:provider.region}:#{AWS::AccountId}:${self:custom.sns.propagationTopicName}"
+    propagationTopicArn: { "Fn::Join" : ["", ["arn:aws:sns:${self:provider.region}:", { "Ref" : "AWS::AccountId" }, ":${self:custom.sns.propagationTopicName}" ] ]  }
 plugins:
   - serverless-webpack
-  - serverless-pseudo-parameters
 provider:
   name: aws
   runtime: nodejs8.10
@@ -27,6 +26,7 @@ provider:
         - "s3:List*"
       Resource:
         - "arn:aws:s3:::${self:custom.s3.storageBucketName}"
+        - "arn:aws:s3:::${self:custom.s3.storageBucketName}/*"
     - Effect: "Allow"
       Action:
         - "sns:Subscribe"
@@ -80,13 +80,19 @@ resources:
                     - Ref: LivingScraperReadingsStorage
                     - /*
   Outputs:
-    LivingScraperWebsiteURL:
+    LivingPropagationTopicArn:
+      Description: "Living propagation topic arn"
+      Value:
+        'Ref': "SNSTopicLivingpropagationtopic${self:provider.stage}"
+      Export:
+        Name: "${self:service}-${self:provider.stage}-LivingPropagationTopicArn"
+    ScraperWebsiteURL:
       Value:
         Fn::GetAtt:
           - LivingScraperReadingsStorage
           - WebsiteURL
       Description: URL for website hosted on S3
-    LivingScraperStorageSecureURL:
+    ScraperStorageSecureURL:
       Value:
         Fn::Join:
           - ''
