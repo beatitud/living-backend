@@ -1,9 +1,9 @@
 import {SNSEventRecord} from "aws-lambda";
 import {from} from "rxjs/index";
 import {map, flatMap, reduce} from "rxjs/operators";
-import {EwtnCrawler, ICrawler, ICrawlingResult} from "./EwtnCrawler";
+import {ICrawlingResult} from "./EwtnCrawler";
 import {IKeyValueStore, KeyValueStore} from "./KeyValueStore";
-import Axios from "axios";
+import Axios, {AxiosInstance} from "axios";
 import * as cheerio from "cheerio";
 import {PutObjectOutput} from "aws-sdk/clients/s3";
 
@@ -25,8 +25,8 @@ export interface IScrapingService {
 
 export default class ScrapingService implements IScrapingService {
 
-    constructor(private readonly crawler: ICrawler = new EwtnCrawler(),
-                private readonly keyValueStore: IKeyValueStore = new KeyValueStore()) {
+    constructor(private readonly keyValueStore: IKeyValueStore = new KeyValueStore(),
+                private readonly httpClient: AxiosInstance = Axios) {
     }
 
     public async scrapReadings(records: SNSEventRecord[]): Promise<any> {
@@ -55,11 +55,18 @@ export default class ScrapingService implements IScrapingService {
         };
     }
 
+    // noinspection JSMethodCanBeStatic
+    private removeFootNotes(html: string): string {
+        const result = html.replace(/\[[^\]]+]/gi, "");
+        return result;
+    }
+
     private async getAndScrap(reading: any): Promise<IScrapedReading> {
-        const response = await Axios.get(reading.link);
+        const response = await this.httpClient.get(reading.link);
         const $ = cheerio.load(response.data);
-        const text = $("span[id].text").toArray()
+        const text = $("p>span.text").toArray()
             .map(x => $(x).parent().html())
+            .map(x => this.removeFootNotes(x))
             .reduce((agg, x) => `${agg}${x}`, "");
         return {
             text,

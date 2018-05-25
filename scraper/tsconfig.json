@@ -9,7 +9,7 @@
     "listFiles": false,
     "target" : "es6",
     "sourceMap": true,
-    "types": ["node"], // "reflect-metadata", "mocha",
+    "types": ["node", "mocha"], // "reflect-metadata", "mocha",
     "lib": [
       "dom",
       "es5",
