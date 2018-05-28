@@ -33,7 +33,9 @@
   "author": "The serverless webpack authors (https://github.com/elastic-coders/serverless-webpack)",
   "license": "MIT",
   "dependencies": {
+    "@types/bluebird": "^3.5.20",
     "axios": "^0.18.0",
+    "bluebird": "^3.5.1",
     "cheerio": "^1.0.0-rc.2",
     "lodash": "^4.17.5",
     "moment": "^2.22.0",

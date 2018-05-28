@@ -49,10 +49,11 @@ export default class ScrapingService implements IScrapingService {
     private async mapToScraped(crawled: ICrawlingResult): Promise<IScrapingResult> {
         const readings = crawled.readings
             .map(x => this.getAndScrap(x));
-        return {
+        const result = {
             ...crawled,
             readings: await Promise.all(readings),
         };
+        return result;
     }
 
     // noinspection JSMethodCanBeStatic
@@ -65,7 +66,7 @@ export default class ScrapingService implements IScrapingService {
         const response = await this.httpClient.get(reading.link);
         const $ = cheerio.load(response.data);
         const text = $("p>span.text").toArray()
-            .map(x => $(x).parent().html())
+            .map(x => `<span class="${x.attribs.class}">${$(x).html()}</span>`)
             .map(x => this.removeFootNotes(x))
             .reduce((agg, x) => `${agg}${x}`, "");
         return {
